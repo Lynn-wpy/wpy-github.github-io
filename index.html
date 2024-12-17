@@ -1,0 +1,132 @@
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>湛江市赤坎区 - 在线地图</title>
+    <!-- 引入 Leaflet CSS 文件 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* 页面整体样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 20px 0;
+            color: #444;
+            text-shadow: 1px 1px 2px #aaa;
+        }
+
+        p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        /* 地图容器样式 */
+        #map {
+            height: 500px;
+            width: 90%;
+            margin: 0 auto;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 按钮容器样式 */
+        .button-container {
+            margin: 20px 0;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面标题和描述 -->
+    <h1>湛江市赤坎区 - 在线地图</h1>
+    <p>这是一个基于 <b>Leaflet</b> 和 OpenStreetMap 的在线地图，您可以浏览、缩放和查看标记点。</p>
+
+    <!-- 地图容器 -->
+    <div id="map"></div>
+
+    <!-- 按钮容器 -->
+    <div class="button-container">
+        <button onclick="zoomIn()">放大地图</button>
+        <button onclick="zoomOut()">缩小地图</button>
+        <button onclick="locateUser()">显示我的位置</button>
+    </div>
+
+    <!-- 引入 Leaflet JavaScript 文件 -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 初始化地图，并设置中心点为湛江市赤坎区
+        var map = L.map('map').setView([21.2739, 110.3589], 13); // 湛江市赤坎区坐标
+
+        // 添加地图底图层（使用 OpenStreetMap 数据）
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // 添加标记点
+        var marker = L.marker([21.2739, 110.3589]).addTo(map);
+        marker.bindPopup("<b>湛江市赤坎区</b><br>欢迎来到湛江！").openPopup();
+
+        // 放大地图
+        function zoomIn() {
+            map.zoomIn();
+        }
+
+        // 缩小地图
+        function zoomOut() {
+            map.zoomOut();
+        }
+
+        // 定位用户当前位置
+        function locateUser() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+
+                    // 设置地图中心到用户当前位置
+                    map.setView([lat, lng], 13);
+
+                    // 添加标记到当前位置
+                    L.marker([lat, lng]).addTo(map)
+                        .bindPopup("您当前位置的坐标：<br>纬度: " + lat + "<br>经度: " + lng)
+                        .openPopup();
+                }, function() {
+                    alert("无法获取您的位置，请确保浏览器启用了定位服务。");
+                });
+            } else {
+                alert("您的浏览器不支持地理定位功能。");
+            }
+        }
+    </script>
+</body>
+</html>
