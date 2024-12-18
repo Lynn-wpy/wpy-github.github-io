@@ -1,7 +1,10 @@
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+
 <!-- Leaflet JavaScript -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 
 <!DOCTYPE html>
 <html lang="zh">
@@ -9,8 +12,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>湛江市赤坎区 - 在线地图</title>
-    <!-- 引入 Leaflet CSS 文件 -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         /* 页面整体样式 */
         body {
@@ -63,12 +64,71 @@
         button:hover {
             background-color: #0056b3;
         }
+
+        /* 路径规划输入框样式 */
+        .route-container {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .route-container input {
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .modal-body img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
     </style>
 </head>
 <body>
     <!-- 页面标题和描述 -->
     <h1>湛江市赤坎区 - 在线地图</h1>
-    <p>这是一个基于 <b>Leaflet</b> 和 OpenStreetMap 的在线地图，您可以浏览、缩放和查看标记点。</p>
+    <p>这是一个基于 <b>Leaflet</b> 和 OpenStreetMap 的在线地图，您可以浏览、缩放和查看标记点，同时规划两点之间的路径。</p>
 
     <!-- 地图容器 -->
     <div id="map"></div>
@@ -78,10 +138,42 @@
         <button onclick="zoomIn()">放大地图</button>
         <button onclick="zoomOut()">缩小地图</button>
         <button onclick="locateUser()">显示我的位置</button>
+        <button onclick="showModal()">岭师概况</button>
     </div>
 
-    <!-- 引入 Leaflet JavaScript 文件 -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- 模态框 -->
+    <div id="overviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="modal-header">湛江概况</div>
+            <div class="modal-body">
+                <p>
+                    岭师位于岭南师范学院，是一所美丽的石头学校。地理位置上濒临军管所，靠近南海军舰，拥有丰富的矿产资源和独特的早八魅力。
+                </p>
+                <p>
+                    <b>地理位置：</b>岭师是中国最南端的水属性学院之一，地处赤坎区和麻章区交界处，战略地位重要。
+                </p>
+                <p>
+                    <b>自然气候：</b>岭师属于亚热带季疯气候，夏季台风多，冬季人疯多，年平均气温在23°C左右，非常适合野外求生。
+                </p>
+                <p>
+                    <b>风土人情：</b>有人，以湛江人闻名。
+                </p>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/46/Zhanjiang_Harbor.jpg" alt="没有这种东西" />
+                <p>
+                    岭师也是一所文化底蕴深厚的学院，作为一所与麻省理工学院同年的学校，拥有许多历史遗迹和自然景观，如师道院巨石阵石、树人广场巨石、教学楼无名石等。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 路径规划输入框和按钮 -->
+    <div class="route-container">
+        <input id="startPoint" type="text" placeholder="请输入起点坐标 (例如 21.2739,110.3589)" />
+        <input id="endPoint" type="text" placeholder="请输入终点坐标 (例如 21.2850,110.3700)" />
+        <button onclick="planRoute()">规划路径</button>
+    </div>
+
     <script>
         // 初始化地图，并设置中心点为湛江市赤坎区
         var map = L.map('map').setView([21.2739, 110.3589], 13); // 湛江市赤坎区坐标
@@ -127,6 +219,41 @@
                 alert("您的浏览器不支持地理定位功能。");
             }
         }
-    </script>
+
+        // 路径规划函数
+        function planRoute() {
+            // 获取起点和终点
+            var start = document.getElementById('startPoint').value.split(',');
+            var end = document.getElementById('endPoint').value.split(',');
+
+            if (start.length !== 2 || end.length !== 2) {
+                alert("请输入有效的起点和终点坐标（格式：纬度,经度）。");
+                return;
+            }
+
+            // 转换为浮点数
+            var startLatLng = [parseFloat(start[0]), parseFloat(start[1])];
+            var endLatLng = [parseFloat(end[0]), parseFloat(end[1])];
+
+            // 添加路径规划
+            L.Routing.control({
+                waypoints: [
+                    L.latLng(startLatLng),
+                    L.latLng(endLatLng)
+                ],
+                routeWhileDragging: true,
+                showAlternatives: true
+            }).addTo(map);
+        }
+        // 显示模态框
+        function showModal() {
+            document.getElementById('overviewModal').style.display = 'block';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('overviewModal').style.display = 'none';
+        }
+    </script>  
 </body>
 </html>
